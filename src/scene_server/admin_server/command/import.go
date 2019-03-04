@@ -32,11 +32,15 @@ func backup(ctx context.Context, db dal.RDB, opt *option) error {
 	dir := filepath.Dir(opt.position)
 	now := time.Now().Format("2006_01_02_15_04_05")
 	file := filepath.Join(dir, "backup_bk_biz_"+now+".json")
-	err := export(ctx, db, &option{position: file, OwnerID: opt.OwnerID, mini: false, scope: "all"})
+	exportOpt := *opt
+	exportOpt.position = file
+	exportOpt.mini = false
+	exportOpt.scope = "all"
+	err := export(ctx, db, &exportOpt)
 	if nil != err {
 		return err
 	}
-	fmt.Println("blueking business has been backup to \033[35m" + file + "\033[0m")
+	fmt.Println("%s business has been backup to \033[35m"+file+"\033[0m", opt.bizName)
 	return nil
 }
 
@@ -117,13 +121,13 @@ func importBKBiz(ctx context.Context, db dal.RDB, opt *option) error {
 					return err
 				}
 
-				cur.BizTopo.walk(func(node *Node) error {
+				err = cur.BizTopo.walk(func(node *Node) error {
 					nodeID, err := node.getInstID()
 					if nil != err {
 						return err
 					}
 					if node.ObjID == objID && nodeID == instID {
-						node.walk(func(child *Node) error {
+						childErr := node.walk(func(child *Node) error {
 							childID, err := child.getInstID()
 							if nil != err {
 								return err
@@ -138,7 +142,7 @@ func importBKBiz(ctx context.Context, db dal.RDB, opt *option) error {
 									return fmt.Errorf("get host count error: %s", err.Error())
 								}
 								if count > 0 {
-									return fmt.Errorf("there are %d hosts binded to module %v, please unbind them first and try again ", node.Data[common.BKModuleNameField], err.Error())
+									return fmt.Errorf("there are %d hosts binded to module %v, please unbind them first and try again ", count, node.Data[common.BKModuleNameField])
 								}
 							}
 
@@ -160,10 +164,15 @@ func importBKBiz(ctx context.Context, db dal.RDB, opt *option) error {
 							}
 							return nil
 						})
-						return fmt.Errorf("break")
+						if childErr != nil {
+							return childErr
+						}
 					}
 					return nil
 				})
+				if err != nil && err.Error() != "break" {
+					return err
+				}
 
 			}
 		}

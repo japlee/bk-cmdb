@@ -15,6 +15,7 @@ package mongo
 import (
 	"context"
 	"strings"
+	"time"
 
 	"configcenter/src/common/util"
 	"configcenter/src/storage/dal"
@@ -33,15 +34,17 @@ type Mongo struct {
 var _ dal.RDB = new(Mongo)
 
 // NewMgo returns new RDB
-func NewMgo(uri string) (*Mongo, error) {
+func NewMgo(uri string, timeout time.Duration) (*Mongo, error) {
 	cs, err := mgo.ParseURL(uri)
 	if err != nil {
 		return nil, err
 	}
-	client, err := mgo.DialWithInfo(cs)
+	client, err := mgo.DialWithTimeout(uri, time.Second*10)
 	if err != nil {
 		return nil, err
 	}
+	client.SetSyncTimeout(timeout)
+	client.SetSocketTimeout(timeout)
 	return &Mongo{
 		dbc:    client,
 		dbname: cs.Database,
@@ -56,8 +59,7 @@ func (c *Mongo) Close() error {
 
 // Ping replica client
 func (c *Mongo) Ping() error {
-	// TODO
-	return nil
+	return c.dbc.Ping()
 }
 
 // Clone return the new client
@@ -70,6 +72,14 @@ func (c *Mongo) Clone() dal.RDB {
 }
 
 func (c *Mongo) IsDuplicatedError(err error) bool {
+	if err != nil {
+		if strings.Contains(err.Error(), "The existing index") {
+			return true
+		}
+		if strings.Contains(err.Error(), "There's already an index with name") {
+			return true
+		}
+	}
 	return err == dal.ErrDuplicated || mgo.IsDup(err)
 }
 func (c *Mongo) IsNotFoundError(err error) bool {
@@ -191,7 +201,11 @@ func (c *Mongo) NextSequence(ctx context.Context, sequenceName string) (uint64, 
 	c.dbc.Refresh()
 	coll := c.dbc.DB(c.dbname).C("cc_idgenerator")
 	change := mgo.Change{
-		Update:    bson.M{"$inc": bson.M{"SequenceID": int64(1)}},
+		Update: bson.M{
+			"$inc":         bson.M{"SequenceID": int64(1)},
+			"$setOnInsert": bson.M{"create_time": time.Now()},
+			"$set":         bson.M{"last_time": time.Now()},
+		},
 		ReturnNew: true,
 		Upsert:    true,
 	}

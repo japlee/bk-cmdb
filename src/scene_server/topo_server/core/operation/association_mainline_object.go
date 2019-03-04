@@ -21,6 +21,7 @@ import (
 	"configcenter/src/common/errors"
 	"configcenter/src/common/mapstr"
 	"configcenter/src/common/metadata"
+	"configcenter/src/common/util"
 	"configcenter/src/scene_server/topo_server/core/model"
 	"configcenter/src/scene_server/topo_server/core/types"
 )
@@ -79,8 +80,10 @@ func (a *association) DeleteMainlineAssociaton(params types.ContextParams, objID
 
 func (a *association) SearchMainlineAssociationTopo(params types.ContextParams, targetObj model.Object) ([]*metadata.MainlineObjectTopo, error) {
 
+	foundObjIDMap := make(map[string]bool)
 	results := make([]*metadata.MainlineObjectTopo, 0)
 	for {
+		resultsLen := len(results)
 
 		tmpRst := &metadata.MainlineObjectTopo{}
 		tmpRst.ObjID = targetObj.GetID()
@@ -100,15 +103,29 @@ func (a *association) SearchMainlineAssociationTopo(params types.ContextParams, 
 			tmpRst.NextObj = childObj.GetID()
 			tmpRst.NextName = childObj.GetName()
 		} else if nil != err {
-			if io.EOF == err {
-				results = append(results, tmpRst)
-				return results, nil
+			if io.EOF != err {
+				return nil, err
 			}
-			return nil, err
+			if _, ok := foundObjIDMap[tmpRst.ObjID]; !ok {
+				results = append(results, tmpRst)
+				foundObjIDMap[tmpRst.ObjID] = true
+			}
+			return results, nil
 		}
 
-		results = append(results, tmpRst)
+		if _, ok := foundObjIDMap[tmpRst.ObjID]; !ok {
+			results = append(results, tmpRst)
+			foundObjIDMap[tmpRst.ObjID] = true
+		}
 		targetObj = childObj
+
+		// detect infinite loop by checking whether there are new added objects in current loop.
+		if resultsLen == len(results) {
+			// merely return found objects here to avoid infinite loop.
+			// returned results here maybe parts of all mainline objects.
+			// better to prevent loop from taking shape seriously, at adding or editing association.
+			return results, nil
+		}
 	}
 
 }
@@ -119,6 +136,16 @@ func (a *association) CreateMainlineAssociation(params types.ContextParams, data
 	if nil != err {
 		blog.Errorf("[operation-asst] failed to check the mainline topo level, error info is %s", err.Error())
 		return nil, err
+	}
+
+	if data.AsstObjID == "" {
+		blog.Errorf("[operation-asst] bk_asst_obj_id empty,rid:%s", util.GetHTTPCCRequestID(params.Header))
+		return nil, params.Err.Errorf(common.CCErrCommParamsNeedSet, common.BKAsstObjIDField)
+	}
+
+	if data.ClassificationID == "" {
+		blog.Errorf("[operation-asst] bk_classification_id empty,rid:%s", util.GetHTTPCCRequestID(params.Header))
+		return nil, params.Err.Errorf(common.CCErrCommParamsNeedSet, common.BKClassificationIDField)
 	}
 
 	items, err := a.SearchMainlineAssociationTopo(params, bizObj)
@@ -165,7 +192,7 @@ func (a *association) CreateMainlineAssociation(params types.ContextParams, data
 		common.BKObjIconField:          data.ObjectIcon,
 		common.BKClassificationIDField: data.ClassificationID,
 	}
-	currentObj, err := a.obj.CreateObject(params, objData)
+	currentObj, err := a.obj.CreateObject(params, true, objData)
 	if err != nil {
 		return nil, err
 	}

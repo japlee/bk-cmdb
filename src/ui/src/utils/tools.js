@@ -56,16 +56,22 @@ export function getPropertyText (property, item) {
     const propertyType = property['bk_property_type']
     let propertyValue = item[propertyId]
     if (propertyType === 'enum') {
-        const enumOption = (property.option || []).find(option => option.id === propertyValue)
+        const options = Array.isArray(property.option) ? property.option : []
+        const enumOption = options.find(option => option.id === propertyValue)
         propertyValue = enumOption ? enumOption.name : null
     } else if (['singleasst', 'multiasst'].includes(propertyType)) {
-        propertyValue = (propertyValue || []).map(inst => inst['bk_inst_name']).join(',')
+        const values = Array.isArray(propertyValue) ? propertyValue : []
+        propertyValue = values.map(inst => inst['bk_inst_name']).join(',')
     } else if (['date', 'time'].includes(propertyType)) {
         propertyValue = formatTime(propertyValue, propertyType === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm:ss')
     } else if (propertyType === 'objuser') {
         propertyValue = getFullName(propertyValue)
     } else if (propertyType === 'foreignkey') {
-        propertyValue = (propertyValue || []).map(inst => inst['bk_inst_name']).join(',')
+        if (Array.isArray(propertyValue)) {
+            propertyValue = propertyValue.map(inst => inst['bk_inst_name']).join(',')
+        } else {
+            return String(propertyValue).length ? propertyValue : '--'
+        }
     }
     return propertyValue || '--'
 }
@@ -119,7 +125,8 @@ export function getInstFormValues (properties, inst = {}) {
             // const validAsst = (inst[propertyId] || []).filter(asstInst => asstInst.id !== '')
             // values[propertyId] = validAsst.map(asstInst => asstInst['bk_inst_id']).join(',')
         } else if (['date', 'time'].includes(propertyType)) {
-            values[propertyId] = formatTime(inst[propertyId], propertyType === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm:ss')
+            const formatedTime = formatTime(inst[propertyId], propertyType === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm:ss')
+            values[propertyId] = formatedTime || null
         } else if (['int'].includes(propertyType)) {
             values[propertyId] = ['', undefined].includes(inst[propertyId]) ? null : inst[propertyId]
         } else if (['bool'].includes(propertyType)) {

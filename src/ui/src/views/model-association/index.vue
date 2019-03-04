@@ -23,17 +23,27 @@
                 {{item['bk_asst_name'] || '--'}}
             </template>
             <template slot="operation" slot-scope="{ item }">
-                <span class="text-primary mr10" @click.stop="editRelation(item)">
-                    {{$t('Common["编辑"]')}}
-                </span>
-                <span class="text-primary" v-if="!item.ispre && !isReadOnly" @click.stop="deleteRelation(item)">
-                    {{$t('Common["删除"]')}}
-                </span>
+                <template v-if="item.ispre">
+                    <span class="text-primary disabled mr10">
+                        {{$t('Common["编辑"]')}}
+                    </span>
+                    <span class="text-primary disabled">
+                        {{$t('Common["删除"]')}}
+                    </span>
+                </template>
+                <template v-else>
+                    <span class="text-primary mr10" @click.stop="editRelation(item)">
+                        {{$t('Common["编辑"]')}}
+                    </span>
+                    <span class="text-primary" @click.stop="deleteRelation(item)">
+                        {{$t('Common["删除"]')}}
+                    </span>
+                </template>
             </template>
         </cmdb-table>
         <cmdb-slider
             class="relation-slider"
-            :width="514"
+            :width="450"
             :title="slider.title"
             :isShow.sync="slider.isShow">
             <the-relation
@@ -79,7 +89,8 @@
                         name: this.$t('ModelManagement["目标->源描述"]')
                     }, {
                         id: 'count',
-                        name: this.$t('ModelManagement["使用数"]')
+                        name: this.$t('ModelManagement["使用数"]'),
+                        sortable: false
                     }, {
                         id: 'operation',
                         name: this.$t('Common["操作"]'),
@@ -91,8 +102,8 @@
                         current: 1,
                         size: 10
                     },
-                    defaultSort: '-bk_asst_id',
-                    sort: '-bk_asst_id'
+                    defaultSort: '-ispre',
+                    sort: '-ispre'
                 }
             }
         },
@@ -201,15 +212,15 @@
                 this.searchRelation()
             },
             handlePageChange (current) {
-                this.pagination.current = current
+                this.table.pagination.current = current
                 this.searchRelation()
             },
             handleSizeChange (size) {
-                this.pagination.size = size
+                this.table.pagination.size = size
                 this.handlePageChange(1)
             },
             handleSortChange (sort) {
-                this.sort = sort
+                this.table.sort = sort
                 this.searchRelation()
             }
         }

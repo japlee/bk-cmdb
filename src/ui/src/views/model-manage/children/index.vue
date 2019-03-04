@@ -5,7 +5,7 @@
                 <div class="choose-icon-wrapper">
                     <template v-if="authority.includes('update')">
                         <div class="icon-box" @click="isIconListShow = true">
-                            <i class="icon" :class="activeModel ? activeModel['bk_obj_icon'] : 'icon-cc-default'"></i>
+                            <i class="icon" :class="[activeModel ? activeModel['bk_obj_icon'] : 'icon-cc-default', {ispre: activeModel['ispre']}]"></i>
                             <p class="hover-text">{{$t('ModelManagement["点击切换"]')}}</p>
                         </div>
                         <div class="choose-icon-box" v-if="isIconListShow" v-click-outside="hideChooseBox">
@@ -48,19 +48,21 @@
                     </template>
                 </div>
                 <div class="btn-group">
-                    <label class="label-btn"
-                        v-if="tab.active==='field' && authority.includes('update')"
-                        :class="{'disabled': isReadOnly}">
-                        <i class="icon-cc-import"></i>
-                        <span>{{$t('ModelManagement["导入"]')}}</span>
-                        <input v-if="!isReadOnly" ref="fileInput" type="file" @change.prevent="handleFile">
-                    </label>
-                    <form class="export-form" ref="submitForm" :action="exportUrl" method="POST" v-if="tab.active==='field'">
-                        <label class="label-btn" @click="exportField">
-                            <i class="icon-cc-derivation"></i>
-                            <span>{{$t('ModelManagement["导出"]')}}</span>
+                    <template v-if="canBeImport">
+                        <label class="label-btn"
+                            v-if="tab.active==='field' && authority.includes('update')"
+                            :class="{'disabled': isReadOnly}">
+                            <i class="icon-cc-import"></i>
+                            <span>{{$t('ModelManagement["导入"]')}}</span>
+                            <input v-if="!isReadOnly" ref="fileInput" type="file" @change.prevent="handleFile">
                         </label>
-                    </form>
+                        <form class="export-form" ref="submitForm" :action="exportUrl" method="POST" v-if="tab.active==='field'">
+                            <label class="label-btn" @click="exportField">
+                                <i class="icon-cc-derivation"></i>
+                                <span>{{$t('ModelManagement["导出"]')}}</span>
+                            </label>
+                        </form>
+                    </template>
                     <template v-if="!activeModel['ispre'] && authority.includes('update')">
                         <label class="label-btn"
                         v-if="!isMainLine"
@@ -85,7 +87,7 @@
         </div>
         <bk-tab class="model-details-tab" :active-name.sync="tab.active">
             <bk-tabpanel name="field" :title="$t('ModelManagement[\'模型字段\']')">
-                <the-field ref="field"></the-field>
+                <the-field ref="field" v-if="tab.active === 'field'"></the-field>
             </bk-tabpanel>
             <bk-tabpanel name="relation" :title="$t('ModelManagement[\'模型关联\']')" :show="activeModel && !specialModel.includes(activeModel['bk_obj_id'])">
                 <the-relation v-if="tab.active === 'relation'"></the-relation>
@@ -168,6 +170,10 @@
             },
             authority () {
                 return this.admin ? ['search', 'update', 'delete'] : []
+            },
+            canBeImport () {
+                const cantImport = ['host', 'biz', 'process', 'plat']
+                return this.authority.includes('update') && !this.isMainLine && !cantImport.includes(this.$route.params.modelId)
             }
         },
         watch: {
@@ -429,6 +435,9 @@
             }
             .icon {
                 vertical-align: top;
+                &.ispre {
+                    color: #868b97;
+                }
             }
         }
         .model-text {

@@ -29,12 +29,22 @@
                         {{getModelName(item['bk_asst_obj_id'])}}
                     </template>
                     <template v-else-if="header.id==='operation'">
-                        <span class="text-primary mr10" @click.stop="editRelation(item)">
+                        <template v-if="item.ispre || item['bk_asst_id'] === 'bk_mainline'">
+                            <span class="text-primary mr10 disabled">
                             {{$t('Common["编辑"]')}}
-                        </span>
-                        <span class="text-primary" v-if="!item.ispre && !isReadOnly" @click.stop="deleteRelation(item, index)">
-                            {{$t('Common["删除"]')}}
-                        </span>
+                            </span>
+                            <span class="text-primary disabled">
+                                {{$t('Common["删除"]')}}
+                            </span>
+                        </template>
+                        <template v-else>
+                            <span class="text-primary mr10" @click.stop="editRelation(item)">
+                                {{$t('Common["编辑"]')}}
+                            </span>
+                            <span class="text-primary" @click.stop="deleteRelation(item, index)">
+                                {{$t('Common["删除"]')}}
+                            </span>
+                        </template>
                     </template>
                     <template v-else>
                         {{item[header.id]}}
@@ -43,7 +53,7 @@
             </template>
         </cmdb-table>
         <cmdb-slider
-            :width="514"
+            :width="450"
             :title="slider.title"
             :isShow.sync="slider.isShow">
             <the-relation-detail
@@ -118,6 +128,10 @@
                 return false
             },
             authority () {
+                const cantEdit = ['process', 'plat']
+                if (cantEdit.includes(this.$route.params.modelId)) {
+                    return []
+                }
                 return this.$store.getters.admin ? ['search', 'update', 'delete'] : []
             }
         },

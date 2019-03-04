@@ -266,7 +266,7 @@
     }
     .field-detail {
         margin-bottom: 20px;
-        padding: 20px 0;
+        padding: 20px;
         background: #f3f8ff;
         .form-label:last-child {
             margin: 0;
@@ -278,13 +278,6 @@
             width: 90px;
             line-height: 22px;
             vertical-align: middle;
-        }
-    }
-    .btn-group {
-        margin: 30px 0 0 110px;
-        font-size: 0;
-        .bk-primary {
-            margin-right: 10px;
         }
     }
 </style>

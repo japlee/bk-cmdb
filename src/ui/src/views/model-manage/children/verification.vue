@@ -22,18 +22,28 @@
                         {{item['must_check'] ? $t('ModelManagement["是"]') : $t('ModelManagement["否"]')}}
                     </template>
                     <template v-else-if="header.id==='operation'">
-                        <span class="text-primary mr10" @click.stop="editVerification(item)">
-                            {{$t('Common["编辑"]')}}
-                        </span>
-                        <span class="text-primary" v-if="!isReadOnly && !item.ispre" @click.stop="deleteVerification(item)">
-                            {{$t('Common["删除"]')}}
-                        </span>
+                        <template v-if="item.ispre">
+                            <span class="text-primary disabled mr10">
+                                {{$t('Common["编辑"]')}}
+                            </span>
+                            <span class="text-primary disabled">
+                                {{$t('Common["删除"]')}}
+                            </span>
+                        </template>
+                        <template v-else>
+                            <span class="text-primary mr10" @click.stop="editVerification(item)">
+                                {{$t('Common["编辑"]')}}
+                            </span>
+                            <span class="text-primary" @click.stop="deleteVerification(item)">
+                                {{$t('Common["删除"]')}}
+                            </span>
+                        </template>
                     </template>
                 </div>
             </template>
         </cmdb-table>
         <cmdb-slider
-            :width="514"
+            :width="450"
             :title="slider.title"
             :isShow.sync="slider.isShow">
             <the-verification-detail
@@ -91,6 +101,10 @@
                 return false
             },
             authority () {
+                const cantEdit = ['process', 'plat']
+                if (cantEdit.includes(this.$route.params.modelId)) {
+                    return []
+                }
                 return this.$store.getters.admin ? ['search', 'update', 'delete'] : []
             }
         },

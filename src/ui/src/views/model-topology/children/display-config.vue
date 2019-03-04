@@ -186,16 +186,17 @@
 
 <style lang="scss" scoped>
     .display-wrapper {
-        padding: 20px 30px;
+        padding: 20px 0;
         height: 100%;
         .display-box {
+            padding: 0 30px;
             max-height: calc(100% - 56px);
             @include scrollbar;
         }
     }
     .display-setting {
         .cmdb-form-checkbox {
-            width: 154px;
+            min-width: 154px;
         }
     }
     .display-list {
@@ -308,7 +309,7 @@
         }
     }
     .button-group {
-        margin: 20px 0 0;
+        margin: 20px;
         font-size: 0;
         .bk-button {
             margin-right: 10px;

@@ -61,9 +61,6 @@ const (
 	// CCErrCommParamsIsInvalid the parameter is invalid or nonexistent
 	CCErrCommParamsIsInvalid = 1199011
 
-	// CCErrCommUniqueCheckFailed the uniqueness validation fails
-	CCErrCommUniqueCheckFailed = 1199012
-
 	// CCErrCommParseDataFailed failed to read data from data field
 	CCErrCommParseDataFailed = 1199013
 
@@ -308,6 +305,10 @@ const (
 	CCErrorTopoMutipleObjectInstanceName = 1101059
 	// association kind has already been instantiated
 	CCErrorTopoAssociationKindHasBeenUsed = 1101060
+	// CCErrorTopoAssociationKindMainlineUnavailable can't use bk_mainline in this case
+	CCErrorTopoAssociationKindMainlineUnavailable = 1199043
+	// CCErrorTopoAssociationKindInconsistent means AssociationKind parameter Inconsistent with caller method
+	CCErrorTopoAssociationKindInconsistent = 1199044
 
 	CCErrTopoAppDeleteFailed                       = 1001031
 	CCErrTopoAppUpdateFailed                       = 1001032
@@ -339,6 +340,7 @@ const (
 	CCErrTopoObjectUniqueKeyKindInvalid            = 1001066
 	CCErrTopoObjectUniquePresetCouldNotDelOrEdit   = 1001067
 	CCErrTopoObjectUniqueCanNotHasMutiMustCheck    = 1001068
+	CCErrTopoObjectUniqueShouldHaveMoreThanOne     = 1001069
 
 	CCErrTopoMulueIDNotfoundFailed = 1101080
 	CCErrTopoBkAppNotAllowedDelete = 1101081

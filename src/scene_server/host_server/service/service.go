@@ -36,10 +36,10 @@ type Service struct {
 
 func (s *Service) WebService() *restful.WebService {
 	ws := new(restful.WebService)
-	getErrFun := func() errors.CCErrorIf {
+	getErrFunc := func() errors.CCErrorIf {
 		return s.CCErr
 	}
-	ws.Path("/host/{version}").Filter(rdapi.AllGlobalFilter(getErrFun)).Produces(restful.MIME_JSON)
+	ws.Path("/host/{version}").Filter(rdapi.AllGlobalFilter(getErrFunc)).Produces(restful.MIME_JSON)
 	//restful.DefaultRequestContentType(restful.MIME_JSON)
 	//restful.DefaultResponseContentType(restful.MIME_JSON)
 
@@ -54,8 +54,8 @@ func (s *Service) WebService() *restful.WebService {
 	ws.Route(ws.PUT("hosts/favorites/{id}").To(s.UpdateHostFavouriteByID))
 	ws.Route(ws.DELETE("hosts/favorites/{id}").To(s.DeleteHostFavouriteByID))
 	ws.Route(ws.PUT("/hosts/favorites/{id}/incr").To(s.IncrHostFavouritesCount))
-	ws.Route(ws.POST("/hosts/history").To(s.AddHistory))
-	ws.Route(ws.GET("/hosts/history/{start}/{limit}").To(s.GetHistorys))
+	//ws.Route(ws.POST("/hosts/history").To(s.AddHistory))
+	//ws.Route(ws.GET("/hosts/history/{start}/{limit}").To(s.GetHistorys))
 	ws.Route(ws.POST("/hosts/modules/biz/mutiple").To(s.AddHostMultiAppModuleRelation))
 	ws.Route(ws.POST("/hosts/modules").To(s.HostModuleRelation))
 	ws.Route(ws.POST("/hosts/modules/idle").To(s.MoveHost2EmptyModule))

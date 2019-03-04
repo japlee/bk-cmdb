@@ -270,6 +270,9 @@ func (o *object) GetMainlineChildObject() (Object, error) {
 		}
 
 		objItems := CreateObject(o.params, o.clientSet, rspRst)
+		if len(objItems) > 1 {
+			blog.Errorf("[model-obj] get multiple(%d) children for object(%s)", len(objItems), asst.ObjectID)
+		}
 		for _, item := range objItems {
 			// only one child in the main-line
 			return item, nil
@@ -369,7 +372,7 @@ func (o *object) SetMainlineParentObject(objID string) error {
 		asst.ObjectID = o.obj.ObjectID
 		asst.AsstObjID = objID
 
-		rsp, err := o.clientSet.ObjectController().Meta().CreateObjectAssociation(context.Background(), o.params.Header, asst)
+		rsp, err := o.clientSet.ObjectController().Meta().CreateMainlineObjectAssociation(context.Background(), o.params.Header, asst)
 
 		if nil != err {
 			blog.Errorf("[model-obj] failed to request the object controller, error info is %s", err.Error())
@@ -425,7 +428,7 @@ func (o *object) CreateMainlineObjectAssociation(relateToObjID string) error {
 		IsPre:      &defined,
 	}
 
-	result, err := o.clientSet.ObjectController().Meta().CreateObjectAssociation(context.Background(), o.params.Header, &association)
+	result, err := o.clientSet.ObjectController().Meta().CreateMainlineObjectAssociation(context.Background(), o.params.Header, &association)
 	if err != nil {
 		blog.Errorf("[model-obj] create mainline object association failed, err: %v", err)
 		return err
@@ -506,6 +509,7 @@ func (o *object) IsExists() (bool, error) {
 	cond = condition.CreateCondition()
 	cond.Field(common.BKOwnerIDField).Eq(o.params.SupplierAccount)
 	cond.Field(common.BKObjIDField).Eq(o.obj.ObjectName)
+	cond.Field(o.GetInstIDFieldName()).Eq(o.obj.ObjectName)
 	cond.Field(metadata.ModelFieldID).NotIn([]int64{o.obj.ID})
 
 	items, err = o.search(cond)
@@ -574,6 +578,9 @@ func (o *object) Create() error {
 		return o.params.Err.Error(common.CCErrCommDuplicateItem)
 	}
 
+	if o.obj.ObjIcon == "" {
+		return o.params.Err.Errorf(common.CCErrCommParamsNeedSet, common.BKObjIconField)
+	}
 	rsp, err := o.clientSet.ObjectController().Meta().CreateObject(context.Background(), o.params.Header, &o.obj)
 
 	if nil != err {

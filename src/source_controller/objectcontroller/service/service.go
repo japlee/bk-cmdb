@@ -34,10 +34,10 @@ type Service struct {
 
 func (s *Service) WebService() *restful.WebService {
 	ws := new(restful.WebService)
-	getErrFun := func() errors.CCErrorIf {
+	getErrFunc := func() errors.CCErrorIf {
 		return s.Core.CCErr
 	}
-	ws.Path("/object/{version}").Filter(rdapi.AllGlobalFilter(getErrFun)).Produces(restful.MIME_JSON)
+	ws.Path("/object/{version}").Filter(rdapi.AllGlobalFilter(getErrFunc)).Produces(restful.MIME_JSON)
 	//restful.DefaultRequestContentType(restful.MIME_JSON)
 	restful.DefaultResponseContentType(restful.MIME_JSON)
 
@@ -56,6 +56,7 @@ func (s *Service) WebService() *restful.WebService {
 	ws.Route(ws.POST("/meta/objectassts").To(s.SelectObjectAssociations))
 	ws.Route(ws.DELETE("/meta/objectasst/{id}").To(s.DeleteObjectAssociation))
 	ws.Route(ws.POST("/meta/objectasst").To(s.CreateObjectAssociation))
+	ws.Route(ws.POST("/meta/mainlineobjectasst").To(s.CreateMainlineObjectAssociation))
 	ws.Route(ws.PUT("/meta/objectasst/{id}").To(s.UpdateObjectAssociation))
 
 	ws.Route(ws.POST("/meta/objectatt/{id}").To(s.SelectObjectAttByID))
@@ -89,10 +90,11 @@ func (s *Service) WebService() *restful.WebService {
 	ws.Route(ws.PUT("/association/{id}/action/update").To(s.UpdateAssociationType))
 	ws.Route(ws.DELETE("/association/{id}/action/delete").To(s.DeleteAssociationType))
 
-	ws.Route(ws.POST("/object/association/action/search").To(s.SelectObjectAssociations))       // optimization: new api path
-	ws.Route(ws.POST("/object/association/action/create").To(s.CreateObjectAssociation))        // optimization: new api path
-	ws.Route(ws.PUT("/object/association/{id}/action/update").To(s.UpdateObjectAssociation))    // optimization: new api path
-	ws.Route(ws.DELETE("/object/association/{id}/action/delete").To(s.DeleteObjectAssociation)) // optimization: new api path
+	ws.Route(ws.POST("/object/association/action/search").To(s.SelectObjectAssociations))                 // optimization: new api path
+	ws.Route(ws.POST("/object/association/action/create").To(s.CreateObjectAssociation))                  // optimization: new api path
+	ws.Route(ws.POST("/object/association/mainline/action/create").To(s.CreateMainlineObjectAssociation)) // interface mainline association
+	ws.Route(ws.PUT("/object/association/{id}/action/update").To(s.UpdateObjectAssociation))              // optimization: new api path
+	ws.Route(ws.DELETE("/object/association/{id}/action/delete").To(s.DeleteObjectAssociation))           // optimization: new api path
 
 	ws.Route(ws.POST("/inst/association/action/search").To(s.SearchInstAssociations))
 	ws.Route(ws.POST("/inst/association/action/create").To(s.CreateInstAssociation))
